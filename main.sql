@@ -68,7 +68,7 @@ JOIN (
     GROUP BY
         mechanic_id
     )  as mot_stats ON s.staff_id = mot_stats.mechanic_id -- makes mini table that tells us stats from past year
-WHERE mot_stats.passed_mots::numeric / mot_stats.total_mots > 0.75 -- filter for over 75% pass rate
+WHERE mot_stats.passed_mots::numeric / mot_stats.total_mots > 0.9 -- filter for over 75% pass rate
 ORDER BY mot_stats.pass_rate_percentage DESC;
 
 
