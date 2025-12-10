@@ -56,3 +56,7 @@ CREATE TABLE supplier(
     supplier_contact VARCHAR(100),
     supplier_address TEXT
 )
+
+
+
+SELECT s.staff_id as "Staff ID",  as "Staff Name", COUNT(sa.service_task_id) as "Total Tasks Assigned"
