@@ -3,7 +3,7 @@ CREATE TYPE employment_type AS ENUM ('FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMP
 CREATE TYPE shift_status AS ENUM ('PLANNED', 'CONFIRMED', 'COMPLETED', 'CANCELLED');
 CREATE TYPE mot_result AS ENUM ('PASS', 'FAIL', 'ADVISORY');
 
-CREATE TABLE branch (
+CREATE TABLE branch_detail (
     branch_id BIGSERIAL PRIMARY KEY,
     branch_code VARCHAR(10) UNIQUE NOT NULL,
     branch_name VARCHAR(100) NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE employee_pay_band (
     max_hours_per_week SMALLINT
 );
 
-CREATE TABLE staff (
+CREATE TABLE staff_detail (
     staff_id BIGSERIAL PRIMARY KEY,
     branch_id BIGINT NOT NULL REFERENCES branch(branch_id),
     pay_band_id SMALLINT REFERENCES employee_pay_band(pay_band_id),
@@ -41,7 +41,7 @@ CREATE TABLE staff (
     terminated_on DATE
 );
 
-CREATE TABLE role (
+CREATE TABLE role_detail (
     role_id SMALLSERIAL PRIMARY KEY,
     role_code VARCHAR(30) UNIQUE NOT NULL,
     role_name VARCHAR(80) NOT NULL,
@@ -88,7 +88,7 @@ CREATE TABLE staff_availability (
     effective_to DATE
 );
 
-CREATE TABLE shift (
+CREATE TABLE shift_detail (
     shift_id BIGSERIAL PRIMARY KEY,
     staff_id BIGINT NOT NULL REFERENCES staff(staff_id) ON DELETE CASCADE,
     branch_id BIGINT NOT NULL REFERENCES branch(branch_id),
