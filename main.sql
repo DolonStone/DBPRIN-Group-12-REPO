@@ -46,7 +46,7 @@ CREATE TABLE service_task(
 )
 
 
-    CREATE TABLE booking (
+CREATE TABLE booking (
     booking_ID SERIAL PRIMARY KEY,
     booking_date SMALLDATETIME,
     Scheduled_Date SMALLDATETIME,
