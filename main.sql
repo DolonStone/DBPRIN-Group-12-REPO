@@ -1,4 +1,93 @@
+
 CREATE TYPE service_task_status AS ENUM ('Pending', 'In Progress', 'Completed');
+CREATE TYPE bay_status AS ENUM ('Available', 'Occupied', 'Under Maintenance');
+CREATE TYPE bay_inspection_result AS ENUM ('Pass', 'Fail');
+CREATE TYPE allocation_role AS ENUM ('Technician', 'Supervisor', 'Assistant');
+CREATE TYPE booking_status AS ENUM ('Pending', 'Confirmed', 'Cancelled', 'Completed');
+CREATE TYPE membership_tier AS ENUM ('Silver', 'Gold', 'Platinum');
+CREATE TYPE payment_method AS ENUM ('Credit Card', 'Debit Card', 'Cash', 'Online Transfer', 'KLANA');
+CREATE TYPE MOT_result AS ENUM ('Pass', 'Fail');
+
+
+
+CREATE TABLE supplier(
+    supplier_id SERIAL PRIMARY KEY,
+    supplier_name VARCHAR(100) NOT NULL,
+    supplier_contact VARCHAR(100),
+    supplier_address TEXT
+);
+
+CREATE TABLE service_detail(
+    service_id SERIAL PRIMARY KEY,
+    service_name VARCHAR(100) NOT NULL,
+    service_description TEXT,
+    service_duration SMALLINT NOT NULL,
+    service_cost DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE bay(
+    bay_id SERIAL PRIMARY KEY,
+    bay_last_inspection_date TIMESTAMP,
+    bay_status bay_status DEFAULT 'Available',
+    bay_inspection_result bay_inspection_result
+);
+
+CREATE TABLE customer(
+    customer_id SERIAL PRIMARY KEY,
+    customer_name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE vehicle(
+    vehicle_id SERIAL PRIMARY KEY,
+    vehicle_vin VARCHAR(17),
+    vehicle_reg VARCHAR(7)
+);
+
+CREATE TABLE staff(
+    staff_id SERIAL PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50)
+);
+
+
+CREATE TABLE parts_inventory(
+    part_id SERIAL PRIMARY KEY,
+    part_name VARCHAR(100) NOT NULL,
+    part_supplier_id SMALLINT NOT NULL,
+    FOREIGN KEY (part_supplier_id) REFERENCES supplier(supplier_id)
+);
+
+CREATE TABLE memberships(
+    membership_id SERIAL PRIMARY KEY,
+    membership_tier membership_tier,
+    membership_discount SMALLINT,
+    priority_booking BOOLEAN,
+    courtesy_eligibility BOOLEAN
+);
+
+CREATE TABLE courtesy_car(
+    courtesy_car_id SERIAL PRIMARY KEY,
+    start_date TIMESTAMP,
+    agreed_return_date TIMESTAMP,
+    actual_return_date TIMESTAMP,
+    availability_status BOOLEAN
+);
+
+
+CREATE TABLE booking(
+    booking_id SERIAL PRIMARY KEY,
+    booking_date TIMESTAMP,
+    scheduled_date TIMESTAMP,
+    scheduled_time SMALLINT,
+    booking_status booking_status DEFAULT 'Pending',
+    customer_id SMALLINT,
+    vehicle_id SMALLINT,
+    total_amount SMALLINT,
+    courtesy_car_id SMALLINT,
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (vehicle_id) REFERENCES vehicle(vehicle_id),
+    FOREIGN KEY (courtesy_car_id) REFERENCES courtesy_car(courtesy_car_id)
+);
 
 CREATE TABLE service_task(
     service_task_id SERIAL PRIMARY KEY,
@@ -13,18 +102,6 @@ CREATE TABLE service_task(
     FOREIGN KEY (bay_id) REFERENCES bay(bay_id)
 );
 
-CREATE TYPE bay_status AS ENUM ('Available', 'Occupied', 'Under Maintenance');
-CREATE TYPE bay_inspection_result AS ENUM ('Pass', 'Fail');
-
-CREATE TABLE bay(
-    bay_id SERIAL PRIMARY KEY,
-    bay_last_inspection_date SMALLDATETIME,
-    bay_status bay_status DEFAULT 'Available',
-    bay_inspection_result bay_inspection_result
-);
-
-CREATE TYPE allocation_role AS ENUM ('Technician', 'Supervisor', 'Assistant');
-
 CREATE TABLE staff_allocation(
     service_task_id SMALLINT NOT NULL,
     staff_id SMALLINT NOT NULL,
@@ -32,14 +109,6 @@ CREATE TABLE staff_allocation(
     PRIMARY KEY (service_task_id, staff_id),
     FOREIGN KEY (service_task_id) REFERENCES service_task(service_task_id),
     FOREIGN KEY (staff_id) REFERENCES staff(staff_id)
-);
-
-Create TABLE service_detail(
-    service_id SERIAL PRIMARY KEY,
-    service_name VARCHAR(100) NOT NULL,
-    service_description TEXT,
-    service_duration SMALLINT NOT NULL,
-    service_cost DECIMAL(10, 2) NOT NULL
 );
 
 CREATE TABLE car_parts(
@@ -51,110 +120,59 @@ CREATE TABLE car_parts(
     FOREIGN KEY (part_id) REFERENCES parts_inventory(part_id)
 );
 
-CREATE TABLE parts_inventory(
-    part_id SERIAL PRIMARY KEY,
-    part_name VARCHAR(100) NOT NULL,
-    part_supplier_id SMALLINT NOT NULL,
-    FOREIGN KEY (part_supplier_id) REFERENCES supplier(supplier_id)
-);
 
-CREATE TABLE supplier(
-    supplier_id SERIAL PRIMARY KEY,
-    supplier_name VARCHAR(100) NOT NULL,
-    supplier_contact VARCHAR(100),
-    supplier_address TEXT
-);
-
-CREATE TYPE booking_status AS ENUM ('Pending', 'Confirmed', 'Cancelled', 'Completed');
-
-CREATE TABLE booking (
-    booking_ID SERIAL PRIMARY KEY,
-    booking_date DATETIME,
-    Scheduled_Date DATETIME,
-    Scheduled_Time SMALLINT,
-    booking_status booking_status DEFAULT 'Pending',
-    Customer_ID SMALLINT,
-    Vehicle_ID SMALLINT,
-    Total_Amount SMALLINT,
-    courtesy_car_ID SMALLINT,
-    FOREIGN KEY (Customer_ID) REFERENCES customer(Customer_ID),
-    FOREIGN KEY (Vehicle_ID) REFERENCES vehicle(Vehicle_ID),
-    FOREIGN KEY (courtesy_car_ID) REFERENCES courtesy_car(courtesy_car_ID)
-);
-
-CREATE TABLE booking_feedback (
-    feedback_ID SERIAL PRIMARY KEY,
-    booking_ID SMALLINT,
-    feedback TEXT,
-    FOREIGN KEY (booking_ID) REFERENCES booking(booking_ID)
-);
-
-CREATE TABLE customer_details (
-    Customer__ID SERIAL PRIMARY KEY,
-    Customer_phone VARCHAR(15),
-    Customer_email VARCHAR(50),
-    FOREIGN KEY (Membership_ID) REFERENCES customer(Customer_ID)
-);
-
-CREATE TYPE membership_tier AS ENUM ('Silver', 'Gold', 'Platinum');
-
-CREATE TABLE memberships (
-    Membership_ID SERIAL PRIMARY KEY,
-    Membership_tier membership_tier,
-    Membership_discount SMALLINT,
-    Priority_booking BOOLEAN,
-    courtesy_elligibility BOOLEAN
-);
-
-CREATE TABLE courtesy_car (
-    courtesy_car_ID SERIAL PRIMARY KEY,
-    start_date SMALLDATETIME,
-    agreed_return_date SMALLDATETIME,
-    actual_return_date SMALLDATETIME,
-    Availability_status BOOLEAN
-);
-
-CREATE TYPE payment_method AS ENUM (
-    'Credit Card',
-    'Debit Card',
-    'Cash',
-    'Online Transfer',
-    'KLANA'
-);
-
-CREATE TABLE payment (
-    payment_ID SERIAL PRIMARY KEY,
-    booking_ID SMALLINT,
-    payment_date DATETIME,
+CREATE TABLE payment(
+    payment_id SERIAL PRIMARY KEY,
+    booking_id SMALLINT,
+    payment_date TIMESTAMP,
     payment_amount SMALLINT,
     payment_method payment_method,
-    FOREIGN KEY (booking_ID) REFERENCES booking(booking_ID)
+    FOREIGN KEY (booking_id) REFERENCES booking(booking_id)
 );
 
-CREATE TABLE refunds (
-    refund_ID SERIAL PRIMARY KEY,
-    payment_ID INT,
+CREATE TABLE refunds(
+    refund_id SERIAL PRIMARY KEY,
+    payment_id INT,
     refund_amount INT,
-    refund_date DATETIME,
+    refund_date TIMESTAMP,
     reason TEXT,
-    FOREIGN KEY (payment_ID) REFERENCES payment(payment_ID)
+    FOREIGN KEY (payment_id) REFERENCES payment(payment_id)
 );
 
-CREATE TABLE vehicle_details (
-    Vehicle_ID SERIAL PRIMARY KEY,
-    Vehicle_VIN VARCHAR(17),
-    Vehicle_reg VARCHAR(7),
+CREATE TABLE booking_feedback(
+    feedback_id SERIAL PRIMARY KEY,
+    booking_id SMALLINT,
+    feedback TEXT,
+    FOREIGN KEY (booking_id) REFERENCES booking(booking_id)
 );
 
-CREATE TYPE MOT_result AS ENUM ('Pass', 'Fail');
 
-CREATE car_mot (
-    MOT_ID SERIAL PRIMARY KEY,
-    mechanic_ID SMALLINT,
-    MOT_date SMALLDATETIME,
-    MOT_expirary SMALLDATETIME,
-    MOT_result MOT_result,
+
+CREATE TABLE customer_details(
+    customer_details_id SERIAL PRIMARY KEY,
+    customer_phone VARCHAR(15),
+    customer_email VARCHAR(50),
+    membership_id SMALLINT,
+    FOREIGN KEY (membership_id) REFERENCES memberships(membership_id)
 );
+
+CREATE TABLE vehicle_details(
+    vehicle_id SERIAL PRIMARY KEY,
+    vehicle_vin VARCHAR(17),
+    vehicle_reg VARCHAR(7)
+);
+
+
+CREATE TABLE car_mot(
+    mot_id SERIAL PRIMARY KEY,
+    mechanic_id SMALLINT,
+    mot_date TIMESTAMP,
+    mot_expiry TIMESTAMP,
+    mot_result MOT_result,
+    FOREIGN KEY (mechanic_id) REFERENCES staff(staff_id)
+);
+
+
 
 -- Query to find mechanics with a MOT pass rate greater than 75% in the last year
 SELECT
