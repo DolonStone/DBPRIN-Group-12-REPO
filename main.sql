@@ -1,7 +1,7 @@
 CREATE TYPE service_task_status AS ENUM ('Pending', 'In Progress', 'Completed');
 
 CREATE TABLE service_task(
-    service_task_id SERAIAL PRIMARY KEY,
+    service_task_id SERIAL PRIMARY KEY,
     booking_id SMALLINT NOT NULL,
     service_id SMALLINT NOT NULL,
     service_task_status ENUM('Pending', 'In Progress', 'Completed') DEFAULT 'Pending',
@@ -67,8 +67,8 @@ CREATE TYPE booking_status AS ENUM ('Pending', 'Confirmed', 'Cancelled', 'Comple
 
 CREATE TABLE booking (
     booking_ID SERIAL PRIMARY KEY,
-    booking_date SMALLDATETIME,
-    Scheduled_Date SMALLDATETIME,
+    booking_date DATETIME,
+    Scheduled_Date DATETIME,
     Scheduled_Time SMALLINT,
     Status ENUM('Pending', 'Confirmed', 'Cancelled', 'Completed'),
     Customer_ID SMALLINT,
