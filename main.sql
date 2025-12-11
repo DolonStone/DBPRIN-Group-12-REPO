@@ -4,7 +4,7 @@ CREATE TABLE service_task(
     service_task_id SERIAL PRIMARY KEY,
     booking_id SMALLINT NOT NULL,
     service_id SMALLINT NOT NULL,
-    service_task_status ENUM('Pending', 'In Progress', 'Completed') DEFAULT 'Pending',
+    service_task_status service_task_status DEFAULT 'Pending',
     bay_id SMALLINT NOT NULL,
     start_time SMALLINT,
     end_time SMALLINT,
@@ -14,11 +14,13 @@ CREATE TABLE service_task(
 );
 
 CREATE TYPE bay_status AS ENUM ('Available', 'Occupied', 'Under Maintenance');
+CREATE TYPE bay_inspection_result AS ENUM ('Pass', 'Fail');
 
 CREATE TABLE bay(
     bay_id SERIAL PRIMARY KEY,
     bay_last_inspection_date SMALLDATETIME,
-    bay_status ENUM('Available', 'Occupied', 'Under Maintenance') DEFAULT 'Available' bay_inspection_result ENUM('Pass', 'Fail')
+    bay_status bay_status DEFAULT 'Available',
+    bay_inspection_result bay_inspection_result
 );
 
 CREATE TYPE allocation_role AS ENUM ('Technician', 'Supervisor', 'Assistant');
@@ -26,7 +28,7 @@ CREATE TYPE allocation_role AS ENUM ('Technician', 'Supervisor', 'Assistant');
 CREATE TABLE staff_allocation(
     service_task_id SMALLINT NOT NULL,
     staff_id SMALLINT NOT NULL,
-    allocation_role ENUM('Technician', 'Supervisor', 'Assistant') NOT NULL,
+    allocation_role allocation_role NOT NULL,
     PRIMARY KEY (service_task_id, staff_id),
     FOREIGN KEY (service_task_id) REFERENCES service_task(service_task_id),
     FOREIGN KEY (staff_id) REFERENCES staff(staff_id)
@@ -70,7 +72,7 @@ CREATE TABLE booking (
     booking_date DATETIME,
     Scheduled_Date DATETIME,
     Scheduled_Time SMALLINT,
-    Status ENUM('Pending', 'Confirmed', 'Cancelled', 'Completed'),
+    booking_status booking_status DEFAULT 'Pending',
     Customer_ID SMALLINT,
     Vehicle_ID SMALLINT,
     Total_Amount SMALLINT,
@@ -98,7 +100,7 @@ CREATE TYPE membership_tier AS ENUM ('Silver', 'Gold', 'Platinum');
 
 CREATE TABLE memberships (
     Membership_ID SERIAL PRIMARY KEY,
-    Membership_tier ENUM('Silver', 'Gold', 'Platinum'),
+    Membership_tier membership_tier,
     Membership_discount SMALLINT,
     Priority_booking BOOLEAN,
     courtesy_elligibility BOOLEAN
@@ -125,13 +127,7 @@ CREATE TABLE payment (
     booking_ID SMALLINT,
     payment_date DATETIME,
     payment_amount SMALLINT,
-    payment_method ENUM(
-        'Credit Card',
-        'Debit Card',
-        'Cash',
-        'Online Transfer',
-        'KLANA'
-    ),
+    payment_method payment_method,
     FOREIGN KEY (booking_ID) REFERENCES booking(booking_ID)
 );
 
@@ -157,7 +153,7 @@ CREATE car_mot (
     mechanic_ID SMALLINT,
     MOT_date SMALLDATETIME,
     MOT_expirary SMALLDATETIME,
-    MOT_result ENUM('Pass', 'Fail'),
+    MOT_result MOT_result,
 );
 
 -- Query to find mechanics with a MOT pass rate greater than 75% in the last year
