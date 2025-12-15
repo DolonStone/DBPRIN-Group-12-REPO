@@ -20,6 +20,7 @@ CREATE TYPE payment_method AS ENUM (
     'Online Transfer',
     'KLANA'
 );
+CREATE TYPE payment_status AS ENUM ('Pending', 'Completed', 'Failed', 'Refunded');
 
 CREATE TYPE MOT_result AS ENUM ('Pass', 'Fail');
 
@@ -30,7 +31,9 @@ CREATE TABLE supplier(
     supplier_id SERIAL PRIMARY KEY,
     supplier_name VARCHAR(100) NOT NULL,
     supplier_contact VARCHAR(100),
-    supplier_address TEXT
+    supplier_address_line_1 VARCHAR(100),
+    supplier_address_line_2 VARCHAR(100),
+    supplier_postcode VARCHAR(10)
 );
 
 CREATE TABLE service_detail(
@@ -125,7 +128,9 @@ CREATE TABLE staff(
     staff_emergency_contact VARCHAR(15),
     manager_id SMALLINT,
     branch_id SMALLINT NOT NULL,
-    staff_address VARCHAR(50),
+    staff_addr_line_1 VARCHAR(100),
+    staff_addr_line_2 VARCHAR(100),
+    staff_postcode VARCHAR(10),
     FOREIGN KEY (manager_id) REFERENCES staff(staff_id),
     FOREIGN KEY (branch_id) REFERENCES branch_detail(branch_id)
 );
@@ -211,7 +216,8 @@ CREATE TABLE payment(
     booking_id SMALLINT,
     payment_date TIMESTAMP,
     payment_amount SMALLINT,
-    payment_method payment_method,
+    payment_method payment_method ,
+    payment_status payment_status DEFAULT 'Pending',
     FOREIGN KEY (booking_id) REFERENCES booking(booking_id)
 );
 
