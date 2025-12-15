@@ -30,7 +30,7 @@ CREATE TYPE MOT_result AS ENUM ('Pass', 'Fail');
 CREATE TABLE supplier(
     supplier_id SERIAL PRIMARY KEY,
     supplier_name VARCHAR(100) NOT NULL,
-    supplier_contact VARCHAR(100),
+    supplier_phone VARCHAR(15),
     supplier_address_line_1 VARCHAR(100),
     supplier_address_line_2 VARCHAR(100),
     supplier_postcode VARCHAR(10)
@@ -54,7 +54,7 @@ CREATE TABLE bay(
 CREATE TABLE memberships(
     membership_id SERIAL PRIMARY KEY,
     membership_tier membership_tier,
-    membership_discount SMALLINT,
+    membership_discount DECIMAL(3,2),
     priority_booking BOOLEAN,
     courtesy_eligibility BOOLEAN
 );
@@ -67,23 +67,16 @@ CREATE TABLE courtesy_car(
     availability_status BOOLEAN
 );
 
-CREATE TABLE branch_detail(
-    branch_id SERIAL PRIMARY KEY,
-    branch_name VARCHAR(100) NOT NULL,
-    branch_address_line_1 VARCHAR(100),
-    branch_address_line_2 VARCHAR(100),
-    branch_postcode VARCHAR(10)
-);
+
 
 CREATE TABLE role_detail(
     role_id SERIAL PRIMARY KEY,
-    role_name VARCHAR(100) NOT NULL
+    role_description TEXT NOT NULL
 );
 
 CREATE TABLE certification(
     certificate_id SERIAL PRIMARY KEY,
-    certificate_name VARCHAR(100) NOT NULL,
-    certificate_issuer TEXT
+    certificate_description TEXT NOT NULL
 );
 
 CREATE TABLE employee_pay_band(
@@ -94,9 +87,8 @@ CREATE TABLE employee_pay_band(
 
 CREATE TABLE shift_detail(
     shift_id SERIAL PRIMARY KEY,
-    shift_date DATE NOT NULL,
-    shift_start_time TIME NOT NULL,
-    shift_end_time TIME NOT NULL
+    shift_date_and_time TIMESTAMP NOT NULL,
+
 );
 
 CREATE TABLE parts_inventory(
@@ -133,9 +125,27 @@ CREATE TABLE staff(
     staff_addr_line_1 VARCHAR(100),
     staff_addr_line_2 VARCHAR(100),
     staff_postcode VARCHAR(10),
-    FOREIGN KEY (manager_id) REFERENCES staff(staff_id),
-    FOREIGN KEY (branch_id) REFERENCES branch_detail(branch_id)
+
 );
+CREATE TABLE branch_detail(
+    branch_id SERIAL PRIMARY KEY,
+    branch_manager_id SMALLINT,
+    branch_name VARCHAR(100) NOT NULL,
+    branch_address_line_1 VARCHAR(100),
+    branch_address_line_2 VARCHAR(100),
+    branch_postcode VARCHAR(10),
+);
+ALTER TABLE staff
+ADD CONSTRAINT fk_staff_manager
+FOREIGN KEY (manager_id) REFERENCES staff(staff_id);
+
+ALTER TABLE staff
+ADD CONSTRAINT fk_staff_branch
+FOREIGN KEY (branch_id) REFERENCES branch_detail(branch_id);
+
+ALTER TABLE branch_detail
+ADD CONSTRAINT fk_branch_manager
+FOREIGN KEY (branch_manager_id) REFERENCES staff(staff_id);
 
 CREATE TABLE staff_role(
     staff_id SMALLINT NOT NULL,
@@ -166,13 +176,13 @@ CREATE TABLE staff_availability(
 -- =========================
 CREATE TABLE booking(
     booking_id SERIAL PRIMARY KEY,
-    booking_date TIMESTAMP,
-    scheduled_date TIMESTAMP,
-    scheduled_time SMALLINT,
+    booking_date TIMESTAMP NOT NULL,
+    scheduled_date TIMESTAMP NOT NULL,
+    scheduled_time SMALLINT NOT NULL,
     booking_status booking_status DEFAULT 'Pending',
-    customer_id SMALLINT,
-    vehicle_id SMALLINT,
-    total_amount SMALLINT,
+    customer_id SMALLINT NOT NULL,
+    vehicle_id SMALLINT NOT NULL,
+    total_amount SMALLINT ,
     courtesy_car_id SMALLINT,
     FOREIGN KEY (customer_id) REFERENCES customer_details(customer_details_id),
     FOREIGN KEY (vehicle_id) REFERENCES vehicle_details(vehicle_id),
@@ -215,7 +225,7 @@ CREATE TABLE car_parts(
 -- =========================
 CREATE TABLE payment(
     payment_id SERIAL PRIMARY KEY,
-    booking_id SMALLINT,
+    booking_id SMALLINT NOT NULL,
     payment_date TIMESTAMP,
     payment_amount SMALLINT,
     payment_method payment_method ,
@@ -225,9 +235,9 @@ CREATE TABLE payment(
 
 CREATE TABLE refunds(
     refund_id SERIAL PRIMARY KEY,
-    payment_id INT,
-    refund_amount INT,
-    refund_date TIMESTAMP,
+    payment_id SMALLINT NOT NULL,
+    refund_amount SMALLINT NOT NULL,
+    refund_date TIMESTAMP NOT NULL,
     reason TEXT,
     FOREIGN KEY (payment_id) REFERENCES payment(payment_id)
 );
