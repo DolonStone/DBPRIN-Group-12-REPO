@@ -43,13 +43,6 @@ CREATE TABLE vehicle(
     vehicle_reg VARCHAR(7)
 );
 
-CREATE TABLE staff(
-    staff_id SERIAL PRIMARY KEY,
-    first_name VARCHAR(50),
-    last_name VARCHAR(50)
-);
-
-
 CREATE TABLE parts_inventory(
     part_id SERIAL PRIMARY KEY,
     part_name VARCHAR(100) NOT NULL,
@@ -73,6 +66,70 @@ CREATE TABLE courtesy_car(
     availability_status BOOLEAN
 );
 
+CREATE TABLE branch_detail(
+    branch_id SERIAL PRIMARY KEY,
+    branch_name VARCHAR(100) NOT NULL,
+    capacity SMALLINT NOT NULL
+);
+
+CREATE TABLE role_detail(
+    role_id SERIAL PRIMARY KEY,
+    role_name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE certification(
+    certificate_id SERIAL PRIMARY KEY,
+    certificate_name VARCHAR(100) NOT NULL,
+    certificate_issuer TEXT
+);
+
+CREATE TABLE employee_pay_band(
+    emp_pay_band_id SERIAL PRIMARY KEY,
+    salary DECIMAL(10,2) NOT NULL,
+    holiday_pay DECIMAL(8,2)
+);
+
+CREATE TABLE shift_detail(
+    shift_id SERIAL PRIMARY KEY,
+    shift_date DATE NOT NULL,
+    shift_start_time TIME NOT NULL,
+    shift_end_time TIME NOT NULL
+);
+
+CREATE TABLE staff(
+    staff_id SERIAL PRIMARY KEY,
+    staff_name VARCHAR(100) NOT NULL,
+    staff_emergency_contact VARCHAR(15),
+    manager_id SMALLINT,
+    branch_id SMALLINT NOT NULL,
+    staff_last_name VARCHAR(50),
+    staff_date VARCHAR(50),
+    FOREIGN KEY (manager_id) REFERENCES staff(staff_id),
+    FOREIGN KEY (branch_id) REFERENCES branch_detail(branch_id)
+);
+
+CREATE TABLE staff_role(
+    staff_id SMALLINT NOT NULL,
+    role_id SMALLINT NOT NULL,
+    PRIMARY KEY (staff_id, role_id),
+    FOREIGN KEY (staff_id) REFERENCES staff(staff_id),
+    FOREIGN KEY (role_id) REFERENCES role_detail(role_id)
+);
+
+CREATE TABLE staff_certification(
+    staff_id SMALLINT NOT NULL,
+    certificate_id SMALLINT NOT NULL,
+    PRIMARY KEY (staff_id, certificate_id),
+    FOREIGN KEY (staff_id) REFERENCES staff(staff_id),
+    FOREIGN KEY (certificate_id) REFERENCES certification(certificate_id)
+);
+
+CREATE TABLE staff_availability(
+    staff_id SERIAL PRIMARY KEY,
+    shift_id SMALLINT NOT NULL,
+    FOREIGN KEY (staff_id) REFERENCES staff(staff_id),
+    FOREIGN KEY (shift_id) REFERENCES shift_detail(shift_id)
+);
 
 CREATE TABLE booking(
     booking_id SERIAL PRIMARY KEY,
@@ -145,23 +202,6 @@ CREATE TABLE booking_feedback(
     feedback TEXT,
     FOREIGN KEY (booking_id) REFERENCES booking(booking_id)
 );
-
-
-
-CREATE TABLE customer_details(
-    customer_details_id SERIAL PRIMARY KEY,
-    customer_phone VARCHAR(15),
-    customer_email VARCHAR(50),
-    membership_id SMALLINT,
-    FOREIGN KEY (membership_id) REFERENCES memberships(membership_id)
-);
-
-CREATE TABLE vehicle_details(
-    vehicle_id SERIAL PRIMARY KEY,
-    vehicle_vin VARCHAR(17),
-    vehicle_reg VARCHAR(7)
-);
-
 
 CREATE TABLE car_mot(
     mot_id SERIAL PRIMARY KEY,
