@@ -1,113 +1,77 @@
-CREATE TYPE staff_status AS ENUM ('ACTIVE', 'ON_LEAVE', 'INACTIVE');
-CREATE TYPE employment_type AS ENUM ('FULL_TIME', 'PART_TIME', 'CONTRACT', 'TEMPORARY');
-CREATE TYPE shift_status AS ENUM ('PLANNED', 'CONFIRMED', 'COMPLETED', 'CANCELLED');
-CREATE TYPE mot_result AS ENUM ('PASS', 'FAIL', 'ADVISORY');
 
-CREATE TABLE branch_detail (
-    branch_id BIGSERIAL PRIMARY KEY,
-    branch_code VARCHAR(10) UNIQUE NOT NULL,
+CREATE TYPE allocation_role AS ENUM ('Technician', 'Supervisor', 'Assistant');
+
+
+CREATE TABLE branch_detail(
+    branch_id SERIAL PRIMARY KEY,
     branch_name VARCHAR(100) NOT NULL,
-    phone_number VARCHAR(20),
-    email_address VARCHAR(120),
-    address_line_1 VARCHAR(120),
-    address_line_2 VARCHAR(120),
-    city VARCHAR(80),
-    postcode VARCHAR(15),
-    opened_on DATE DEFAULT CURRENT_DATE,
-    is_active BOOLEAN DEFAULT TRUE
+    capacity SMALLINT NOT NULL
 );
 
-CREATE TABLE employee_pay_band (
-    pay_band_id SMALLSERIAL PRIMARY KEY,
-    band_code VARCHAR(10) UNIQUE NOT NULL,
-    band_title VARCHAR(60) NOT NULL,
-    hourly_rate NUMERIC(8,2) NOT NULL,
-    overtime_hourly_rate NUMERIC(8,2),
-    min_hours_per_week SMALLINT,
-    max_hours_per_week SMALLINT
+CREATE TABLE role_detail(
+    role_id SERIAL PRIMARY KEY,
+    role_name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE staff_detail (
-    staff_id BIGSERIAL PRIMARY KEY,
-    branch_id BIGINT NOT NULL REFERENCES branch(branch_id),
-    pay_band_id SMALLINT REFERENCES employee_pay_band(pay_band_id),
-    first_name VARCHAR(60) NOT NULL,
-    last_name VARCHAR(60) NOT NULL,
-    email_address VARCHAR(120) UNIQUE,
-    phone_number VARCHAR(20),
-    employment_type employment_type NOT NULL DEFAULT 'FULL_TIME',
-    status staff_status NOT NULL DEFAULT 'ACTIVE',
-    hired_on DATE DEFAULT CURRENT_DATE,
-    terminated_on DATE
+CREATE TABLE certification(
+    certificate_id SERIAL PRIMARY KEY,
+    certificate_name VARCHAR(100) NOT NULL,
+    certificate_issuer TEXT
 );
 
-CREATE TABLE role_detail (
-    role_id SMALLSERIAL PRIMARY KEY,
-    role_code VARCHAR(30) UNIQUE NOT NULL,
-    role_name VARCHAR(80) NOT NULL,
-    role_desc TEXT
+CREATE TABLE employee_pay_band(
+    emp_pay_band_id SERIAL PRIMARY KEY,
+    salary DECIMAL(10,2) NOT NULL,
+    holiday_pay DECIMAL(8,2)
 );
 
-CREATE TABLE staff_role (
-    staff_role_id BIGSERIAL PRIMARY KEY,
-    staff_id BIGINT NOT NULL REFERENCES staff(staff_id) ON DELETE CASCADE,
-    role_id SMALLINT NOT NULL REFERENCES role(role_id),
-    is_primary BOOLEAN DEFAULT FALSE,
-    valid_from DATE DEFAULT CURRENT_DATE,
-    valid_to DATE,
-    UNIQUE(staff_id, role_id, valid_from)
-);
-
-CREATE TABLE certification (
-    certification_id SMALLSERIAL PRIMARY KEY,
-    cert_code VARCHAR(30) UNIQUE NOT NULL,
-    cert_name VARCHAR(120) NOT NULL,
-    issuer VARCHAR(120),
-    valid_for_months SMALLINT,
-    description TEXT
-);
-
-CREATE TABLE staff_certification (
-    staff_cert_id BIGSERIAL PRIMARY KEY,
-    staff_id BIGINT NOT NULL REFERENCES staff(staff_id) ON DELETE CASCADE,
-    certification_id SMALLINT NOT NULL REFERENCES certification(certification_id),
-    awarded_on DATE NOT NULL,
-    expires_on DATE,
-    certificate_number VARCHAR(60),
-    notes TEXT,
-    UNIQUE(staff_id, certification_id, awarded_on)
-);
-
-CREATE TABLE staff_availability (
-    staff_availability_id BIGSERIAL PRIMARY KEY,
-    staff_id BIGINT NOT NULL REFERENCES staff(staff_id) ON DELETE CASCADE,
-    day_of_week SMALLINT NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    effective_from DATE DEFAULT CURRENT_DATE,
-    effective_to DATE
-);
-
-CREATE TABLE shift_detail (
-    shift_id BIGSERIAL PRIMARY KEY,
-    staff_id BIGINT NOT NULL REFERENCES staff(staff_id) ON DELETE CASCADE,
-    branch_id BIGINT NOT NULL REFERENCES branch(branch_id),
+CREATE TABLE shift_detail(
+    shift_id SERIAL PRIMARY KEY,
     shift_date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    status shift_status DEFAULT 'PLANNED',
-    generated_from_availability BOOLEAN DEFAULT FALSE
+    shift_start_time TIME NOT NULL,
+    shift_end_time TIME NOT NULL
 );
 
-CREATE TABLE car_mot (
-    mot_id BIGSERIAL PRIMARY KEY,
-    vehicle_id BIGINT NOT NULL REFERENCES vehicle(vehicle_id),
-    booking_id BIGINT REFERENCES booking(booking_id),
-    inspector_id BIGINT REFERENCES staff(staff_id),
-    mot_date DATE DEFAULT CURRENT_DATE,
-    expiry_date DATE,
-    odometer_reading INTEGER,
-    result mot_result NOT NULL,
-    advisory_notes TEXT,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE staff(
+    staff_id SERIAL PRIMARY KEY,
+    staff_name VARCHAR(100) NOT NULL,
+    staff_emergency_contact VARCHAR(15),
+    manager_id SMALLINT,
+    branch_id SMALLINT NOT NULL,
+    staff_last_name VARCHAR(50),
+    staff_date VARCHAR(50),
+    FOREIGN KEY (manager_id) REFERENCES staff(staff_id),
+    FOREIGN KEY (branch_id) REFERENCES branch_detail(branch_id)
+);
+
+CREATE TABLE staff_role(
+    staff_id SMALLINT NOT NULL,
+    role_id SMALLINT NOT NULL,
+    PRIMARY KEY (staff_id, role_id),
+    FOREIGN KEY (staff_id) REFERENCES staff(staff_id),
+    FOREIGN KEY (role_id) REFERENCES role_detail(role_id)
+);
+
+CREATE TABLE staff_certification(
+    staff_id SMALLINT NOT NULL,
+    certificate_id SMALLINT NOT NULL,
+    PRIMARY KEY (staff_id, certificate_id),
+    FOREIGN KEY (staff_id) REFERENCES staff(staff_id),
+    FOREIGN KEY (certificate_id) REFERENCES certification(certificate_id)
+);
+
+CREATE TABLE staff_availability(
+    staff_id SERIAL PRIMARY KEY,
+    shift_id SMALLINT NOT NULL,
+    FOREIGN KEY (staff_id) REFERENCES staff(staff_id),
+    FOREIGN KEY (shift_id) REFERENCES shift_detail(shift_id)
+);
+
+CREATE TABLE staff_allocation(
+    service_task_id SMALLINT NOT NULL,
+    staff_id SMALLINT NOT NULL,
+    allocation_role  NOT NULL,
+    PRIMARY KEY (service_task_id, staff_id),
+    FOREIGN KEY (service_task_id) REFERENCES service_task(service_task_id),
+    FOREIGN KEY (staff_id) REFERENCES staff(staff_id)
 );
