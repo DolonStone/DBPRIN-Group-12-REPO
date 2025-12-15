@@ -32,17 +32,6 @@ CREATE TABLE bay(
     bay_inspection_result bay_inspection_result
 );
 
-CREATE TABLE customer(
-    customer_id SERIAL PRIMARY KEY,
-    customer_name VARCHAR(100) NOT NULL
-);
-
-CREATE TABLE vehicle(
-    vehicle_id SERIAL PRIMARY KEY,
-    vehicle_vin VARCHAR(17),
-    vehicle_reg VARCHAR(7)
-);
-
 CREATE TABLE parts_inventory(
     part_id SERIAL PRIMARY KEY,
     part_name VARCHAR(100) NOT NULL,
@@ -201,6 +190,20 @@ CREATE TABLE booking_feedback(
     booking_id SMALLINT,
     feedback TEXT,
     FOREIGN KEY (booking_id) REFERENCES booking(booking_id)
+);
+
+CREATE TABLE customer_details(          -- two table for CUSTOMER --
+    customer_details_id SERIAL PRIMARY KEY,
+    customer_phone VARCHAR(15),
+    customer_email VARCHAR(50),
+    membership_id SMALLINT,
+    FOREIGN KEY (membership_id) REFERENCES memberships(membership_id)
+);
+
+CREATE TABLE vehicle_details(       -- two tables for the VEHICLE --
+    vehicle_id SERIAL PRIMARY KEY,
+    vehicle_vin VARCHAR(17),
+    vehicle_reg VARCHAR(7)
 );
 
 CREATE TABLE car_mot(
