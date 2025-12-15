@@ -1,15 +1,31 @@
-
+-- =========================
+-- ENUM TYPES
+-- =========================
 CREATE TYPE service_task_status AS ENUM ('Pending', 'In Progress', 'Completed');
+
 CREATE TYPE bay_status AS ENUM ('Available', 'Occupied', 'Under Maintenance');
+
 CREATE TYPE bay_inspection_result AS ENUM ('Pass', 'Fail');
+
 CREATE TYPE allocation_role AS ENUM ('Technician', 'Supervisor', 'Assistant');
+
 CREATE TYPE booking_status AS ENUM ('Pending', 'Confirmed', 'Cancelled', 'Completed');
+
 CREATE TYPE membership_tier AS ENUM ('Silver', 'Gold', 'Platinum');
-CREATE TYPE payment_method AS ENUM ('Credit Card', 'Debit Card', 'Cash', 'Online Transfer', 'KLANA');
+
+CREATE TYPE payment_method AS ENUM (
+    'Credit Card',
+    'Debit Card',
+    'Cash',
+    'Online Transfer',
+    'KLANA'
+);
+
 CREATE TYPE MOT_result AS ENUM ('Pass', 'Fail');
 
-
-
+-- =========================
+-- CORE TABLES
+-- =========================
 CREATE TABLE supplier(
     supplier_id SERIAL PRIMARY KEY,
     supplier_name VARCHAR(100) NOT NULL,
@@ -22,7 +38,7 @@ CREATE TABLE service_detail(
     service_name VARCHAR(100) NOT NULL,
     service_description TEXT,
     service_duration SMALLINT NOT NULL,
-    service_cost DECIMAL(10,2) NOT NULL
+    service_cost DECIMAL(10, 2) NOT NULL
 );
 
 CREATE TABLE bay(
@@ -30,13 +46,6 @@ CREATE TABLE bay(
     bay_last_inspection_date TIMESTAMP,
     bay_status bay_status DEFAULT 'Available',
     bay_inspection_result bay_inspection_result
-);
-
-CREATE TABLE parts_inventory(
-    part_id SERIAL PRIMARY KEY,
-    part_name VARCHAR(100) NOT NULL,
-    part_supplier_id SMALLINT NOT NULL,
-    FOREIGN KEY (part_supplier_id) REFERENCES supplier(supplier_id)
 );
 
 CREATE TABLE memberships(
@@ -74,8 +83,8 @@ CREATE TABLE certification(
 
 CREATE TABLE employee_pay_band(
     emp_pay_band_id SERIAL PRIMARY KEY,
-    salary DECIMAL(10,2) NOT NULL,
-    holiday_pay DECIMAL(8,2)
+    salary DECIMAL(10, 2) NOT NULL,
+    holiday_pay DECIMAL(8, 2)
 );
 
 CREATE TABLE shift_detail(
@@ -85,14 +94,38 @@ CREATE TABLE shift_detail(
     shift_end_time TIME NOT NULL
 );
 
+CREATE TABLE parts_inventory(
+    part_id SERIAL PRIMARY KEY,
+    part_name VARCHAR(100) NOT NULL,
+    part_supplier_id SMALLINT NOT NULL,
+    FOREIGN KEY (part_supplier_id) REFERENCES supplier(supplier_id)
+);
+
+CREATE TABLE customer_details(
+    customer_details_id SERIAL PRIMARY KEY,
+    customer_phone VARCHAR(15),
+    customer_email VARCHAR(50),
+    membership_id SMALLINT,
+    FOREIGN KEY (membership_id) REFERENCES memberships(membership_id)
+);
+
+CREATE TABLE vehicle_details(
+    vehicle_id SERIAL PRIMARY KEY,
+    vehicle_vin VARCHAR(17),
+    vehicle_reg VARCHAR(7)
+);
+
+-- =========================
+-- STAFF TABLES
+-- =========================
 CREATE TABLE staff(
     staff_id SERIAL PRIMARY KEY,
     staff_name VARCHAR(100) NOT NULL,
+    staff_last_name VARCHAR(50),
     staff_emergency_contact VARCHAR(15),
     manager_id SMALLINT,
     branch_id SMALLINT NOT NULL,
-    staff_last_name VARCHAR(50),
-    staff_date VARCHAR(50),
+    staff_address VARCHAR(50),
     FOREIGN KEY (manager_id) REFERENCES staff(staff_id),
     FOREIGN KEY (branch_id) REFERENCES branch_detail(branch_id)
 );
@@ -114,12 +147,16 @@ CREATE TABLE staff_certification(
 );
 
 CREATE TABLE staff_availability(
-    staff_id SERIAL PRIMARY KEY,
+    staff_id SMALLINT NOT NULL,
     shift_id SMALLINT NOT NULL,
+    PRIMARY KEY (staff_id, shift_id),
     FOREIGN KEY (staff_id) REFERENCES staff(staff_id),
     FOREIGN KEY (shift_id) REFERENCES shift_detail(shift_id)
 );
 
+-- =========================
+-- BOOKINGS & SERVICES
+-- =========================
 CREATE TABLE booking(
     booking_id SERIAL PRIMARY KEY,
     booking_date TIMESTAMP,
@@ -130,8 +167,8 @@ CREATE TABLE booking(
     vehicle_id SMALLINT,
     total_amount SMALLINT,
     courtesy_car_id SMALLINT,
-    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
-    FOREIGN KEY (vehicle_id) REFERENCES vehicle(vehicle_id),
+    FOREIGN KEY (customer_id) REFERENCES customer_details(customer_details_id),
+    FOREIGN KEY (vehicle_id) REFERENCES vehicle_details(vehicle_id),
     FOREIGN KEY (courtesy_car_id) REFERENCES courtesy_car(courtesy_car_id)
 );
 
@@ -166,7 +203,9 @@ CREATE TABLE car_parts(
     FOREIGN KEY (part_id) REFERENCES parts_inventory(part_id)
 );
 
-
+-- =========================
+-- PAYMENTS & FEEDBACK
+-- =========================
 CREATE TABLE payment(
     payment_id SERIAL PRIMARY KEY,
     booking_id SMALLINT,
@@ -192,20 +231,6 @@ CREATE TABLE booking_feedback(
     FOREIGN KEY (booking_id) REFERENCES booking(booking_id)
 );
 
-CREATE TABLE customer_details(          -- two table for CUSTOMER --
-    customer_details_id SERIAL PRIMARY KEY,
-    customer_phone VARCHAR(15),
-    customer_email VARCHAR(50),
-    membership_id SMALLINT,
-    FOREIGN KEY (membership_id) REFERENCES memberships(membership_id)
-);
-
-CREATE TABLE vehicle_details(       -- two tables for the VEHICLE --
-    vehicle_id SERIAL PRIMARY KEY,
-    vehicle_vin VARCHAR(17),
-    vehicle_reg VARCHAR(7)
-);
-
 CREATE TABLE car_mot(
     mot_id SERIAL PRIMARY KEY,
     mechanic_id SMALLINT,
@@ -215,56 +240,58 @@ CREATE TABLE car_mot(
     FOREIGN KEY (mechanic_id) REFERENCES staff(staff_id)
 );
 
-
-
--- Query to find mechanics with a MOT pass rate greater than 75% in the last year
+-- =========================
+-- QUERY: MOT PASS RATE > 90%
+-- =========================
 SELECT
-    s.staff_id as "Staff ID",
-    s.first_name || ' ' || s.last_name as "Staff Name",
-    mot_stats.total_mots as "Total MOTs",
-    mot_stats.passed_mots as "Passed MOTs",
-    mot_stats.pass_rate_percentage as "MOT Pass Rate (%)"
+    s.staff_id AS "Staff ID",
+    s.staff_name || ' ' || s.staff_last_name AS "Staff Name",
+    mot_stats.total_mots AS "Total MOTs",
+    mot_stats.passed_mots AS "Passed MOTs",
+    mot_stats.pass_rate_percentage AS "MOT Pass Rate (%)"
 FROM
     staff s
     JOIN (
         SELECT
             mechanic_id,
-            COUNT(*) as total_mots,
+            COUNT(*) AS total_mots,
             SUM(
                 CASE
-                    WHEN MOT_outcome = 'Pass' THEN 1
+                    WHEN mot_result = 'Pass' THEN 1
                     ELSE 0
                 END
-            ) as passed_mots,
+            ) AS passed_mots,
             ROUND(
                 (
                     SUM(
                         CASE
-                            WHEN MOT_outcome = 'Pass' THEN 1
+                            WHEN mot_result = 'Pass' THEN 1
                             ELSE 0
                         END
                     ) :: DECIMAL / COUNT(*)
                 ) * 100,
                 2
-            ) as pass_rate_percentage
+            ) AS pass_rate_percentage
         FROM
             car_mot
         WHERE
-            MOT_date >= NOW() - INTERVAL '1 year'
+            mot_date >= NOW() - INTERVAL '1 year'
         GROUP BY
             mechanic_id
-    ) as mot_stats ON s.staff_id = mot_stats.mechanic_id -- makes mini table that tells us stats from past year
+    ) mot_stats ON s.staff_id = mot_stats.mechanic_id
 WHERE
-    mot_stats.passed_mots :: numeric / mot_stats.total_mots > 0.9 -- filter for over 75% pass rate
+    mot_stats.passed_mots :: DECIMAL / mot_stats.total_mots > 0.90
 ORDER BY
     mot_stats.pass_rate_percentage DESC;
 
--- Create VIEW for a staff schedule for the next week
+-- =========================
+-- VIEW: STAFF SCHEDULE (NEXT WEEK)
+-- =========================
 CREATE
 OR REPLACE VIEW staff_schedule AS
 SELECT
     s.staff_id,
-    s.first_name || ' ' || s.last_name AS staff_name,
+    s.staff_name || ' ' || s.staff_last_name AS staff_name,
     STRING_AGG(
         sh.shift_start_time || ' - ' || sh.shift_end_time,
         ', '
@@ -344,15 +371,15 @@ SELECT
     ) AS "Sunday"
 FROM
     staff s
-    LEFT JOIN -- some staff may not have shifts assigned
-    staff_availability sa ON s.staff_id = sa.staff_id
-    LEFT JOIN shift sh ON sa.shift_id = sh.shift_id
+    LEFT JOIN staff_availability sa ON s.staff_id = sa.staff_id
+    LEFT JOIN shift_detail sh ON sa.shift_id = sh.shift_id
 WHERE
-    sh.shift_date >= DATE_TRUNC('week', CURRENT_DATE)
+    s.branch_id = 1
+    AND sh.shift_date >= DATE_TRUNC('week', CURRENT_DATE)
     AND sh.shift_date < DATE_TRUNC('week', CURRENT_DATE) + INTERVAL '7 days'
 GROUP BY
     s.staff_id,
-    s.first_name,
-    s.last_name
+    s.staff_name,
+    s.staff_last_name
 ORDER BY
     s.staff_id;
