@@ -1,4 +1,4 @@
---- ENUM TYPES
+--- ENUM TYPES ---
 CREATE TYPE service_task_status AS ENUM ('Pending', 'In Progress', 'Completed');
 
 CREATE TYPE bay_status AS ENUM ('Available', 'Occupied', 'Under Maintenance');
@@ -23,7 +23,7 @@ CREATE TYPE payment_status AS ENUM ('Pending', 'Completed', 'Failed', 'Refunded'
 CREATE TYPE MOT_result AS ENUM ('Pass', 'Fail');
 
 
---- CORE TABLES
+--- CORE TABLES ---
 CREATE TABLE supplier(
     supplier_id SERIAL PRIMARY KEY,
     supplier_name VARCHAR(100) NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE vehicle_details(
 );
 
 
---- STAFF TABLES
+--- STAFF TABLES ---
 CREATE TABLE staff(
     staff_id SERIAL PRIMARY KEY,
     staff_name VARCHAR(100) NOT NULL,
@@ -167,7 +167,7 @@ CREATE TABLE staff_availability(
 
 
 
--- BOOKINGS & SERVICES
+-- BOOKINGS & SERVICES ---
 CREATE TABLE booking(
     booking_id SERIAL PRIMARY KEY,
     booking_date TIMESTAMP NOT NULL,
@@ -215,7 +215,7 @@ CREATE TABLE car_parts(
 );
 
 
---- PAYMENTS & FEEDBACK
+--- PAYMENTS & FEEDBACK ---
 CREATE TABLE payment(
     payment_id SERIAL PRIMARY KEY,
     booking_id SMALLINT NOT NULL,
@@ -253,8 +253,9 @@ CREATE TABLE car_mot(
     FOREIGN KEY (vehicle_id) REFERENCES vehicle_details(vehicle_id)
 );
 
+---------------------------------------------------------------
 
--- QUERY: MOT PASS RATE > 90%
+-- QUERY: MOT PASS RATE > 90% ---
 SELECT
     s.staff_id AS "Staff ID",
     s.staff_name || ' ' || s.staff_last_name AS "Staff Name",
@@ -297,7 +298,7 @@ ORDER BY
     mot_stats.pass_rate_percentage DESC;
 
 
--- VIEW: STAFF SCHEDULE (NEXT WEEK)
+-- VIEW: STAFF SCHEDULE (NEXT WEEK) ---
 CREATE OR REPLACE VIEW staff_schedule
 SECURITY DEFINER
 AS
@@ -396,7 +397,7 @@ GROUP BY
 ORDER BY
     s.staff_id;
 
--- creating ROLEs for different staff types
+-- CREATING ROLES FOR DIFFERENT STAFF TYPES ---
 CREATE ROLE manager LOGIN PASSWORD 'managerpass1!';
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO manager;
 GRANT USAGE, SELECT, UPDATE, INSERT, DELETE ON ALL SEQUENCES IN SCHEMA public TO manager;
