@@ -300,18 +300,26 @@ ORDER BY
 
 --- COMPARES EFFICIENCY ACROSS DIFFERENT ALLOCATION ROLES ---
 SELECT 
-    sa.allocation_role,
+    sa.allocation_role AS role_name,
     COUNT(DISTINCT sa.staff_id) AS staff_in_role,
     COUNT(DISTINCT sa.service_task_id) AS total_tasks,
-    AVG(st.end_time - st.start_time) AS avg_task_duration,
+    AVG(st.end_time - st.start_time) AS avg_task_duration_minutes,
     COUNT(DISTINCT CASE 
         WHEN st.service_task_status = 'Completed' THEN sa.service_task_id 
     END) AS completed_tasks,
     ROUND(
         COUNT(DISTINCT CASE WHEN st.service_task_status = 'Completed' THEN sa.service_task_id END)::NUMERIC / 
         NULLIF(COUNT(DISTINCT sa.service_task_id), 0) * 100, 2
-    ) AS completion_rate,
-    SUM(sd.service_cost) AS total_revenue_by_role
+    ) AS completion_rate_percentage,
+    COALESCE(SUM(sd.service_cost), 0) AS total_revenue_by_role,
+    ROUND(
+        COALESCE(SUM(sd.service_cost), 0) / 
+        NULLIF(COUNT(DISTINCT sa.staff_id), 0), 2
+    ) AS avg_revenue_per_staff,
+    ROUND(
+        COUNT(DISTINCT sa.service_task_id)::NUMERIC / 
+        NULLIF(COUNT(DISTINCT sa.staff_id), 0), 2
+    ) AS avg_tasks_per_staff
 FROM 
     staff_allocation sa
     INNER JOIN service_task st ON sa.service_task_id = st.service_task_id
