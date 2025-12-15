@@ -234,10 +234,12 @@ CREATE TABLE booking_feedback(
 CREATE TABLE car_mot(
     mot_id SERIAL PRIMARY KEY,
     mechanic_id SMALLINT,
+    vehicle_id SMALLINT,
     mot_date TIMESTAMP,
     mot_expiry TIMESTAMP,
     mot_result MOT_result,
-    FOREIGN KEY (mechanic_id) REFERENCES staff(staff_id)
+    FOREIGN KEY (mechanic_id) REFERENCES staff(staff_id),
+    FOREIGN KEY (vehicle_id) REFERENCES vehicle_details(vehicle_id)
 );
 
 -- =========================
