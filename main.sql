@@ -1,6 +1,4 @@
--- =========================
--- ENUM TYPES
--- =========================
+--- ENUM TYPES
 CREATE TYPE service_task_status AS ENUM ('Pending', 'In Progress', 'Completed');
 
 CREATE TYPE bay_status AS ENUM ('Available', 'Occupied', 'Under Maintenance');
@@ -24,9 +22,8 @@ CREATE TYPE payment_status AS ENUM ('Pending', 'Completed', 'Failed', 'Refunded'
 
 CREATE TYPE MOT_result AS ENUM ('Pass', 'Fail');
 
--- =========================
--- CORE TABLES
--- =========================
+
+--- CORE TABLES
 CREATE TABLE supplier(
     supplier_id SERIAL PRIMARY KEY,
     supplier_name VARCHAR(100) NOT NULL,
@@ -66,8 +63,6 @@ CREATE TABLE courtesy_car(
     actual_return_date TIMESTAMP,
     availability_status BOOLEAN
 );
-
-
 
 CREATE TABLE role_detail(
     role_id SERIAL PRIMARY KEY,
@@ -112,9 +107,8 @@ CREATE TABLE vehicle_details(
     vehicle_reg VARCHAR(7)
 );
 
--- =========================
--- STAFF TABLES
--- =========================
+
+--- STAFF TABLES
 CREATE TABLE staff(
     staff_id SERIAL PRIMARY KEY,
     staff_name VARCHAR(100) NOT NULL,
@@ -171,9 +165,9 @@ CREATE TABLE staff_availability(
     FOREIGN KEY (shift_id) REFERENCES shift_detail(shift_id)
 );
 
--- =========================
+
+
 -- BOOKINGS & SERVICES
--- =========================
 CREATE TABLE booking(
     booking_id SERIAL PRIMARY KEY,
     booking_date TIMESTAMP NOT NULL,
@@ -220,9 +214,8 @@ CREATE TABLE car_parts(
     FOREIGN KEY (part_id) REFERENCES parts_inventory(part_id)
 );
 
--- =========================
--- PAYMENTS & FEEDBACK
--- =========================
+
+--- PAYMENTS & FEEDBACK
 CREATE TABLE payment(
     payment_id SERIAL PRIMARY KEY,
     booking_id SMALLINT NOT NULL,
@@ -260,9 +253,8 @@ CREATE TABLE car_mot(
     FOREIGN KEY (vehicle_id) REFERENCES vehicle_details(vehicle_id)
 );
 
--- =========================
+
 -- QUERY: MOT PASS RATE > 90%
--- =========================
 SELECT
     s.staff_id AS "Staff ID",
     s.staff_name || ' ' || s.staff_last_name AS "Staff Name",
@@ -304,9 +296,8 @@ WHERE
 ORDER BY
     mot_stats.pass_rate_percentage DESC;
 
--- =========================
+
 -- VIEW: STAFF SCHEDULE (NEXT WEEK)
--- =========================
 CREATE OR REPLACE VIEW staff_schedule
 SECURITY DEFINER
 AS
