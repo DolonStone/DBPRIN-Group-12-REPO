@@ -297,8 +297,9 @@ ORDER BY
 -- =========================
 -- VIEW: STAFF SCHEDULE (NEXT WEEK)
 -- =========================
-CREATE
-OR REPLACE VIEW staff_schedule AS
+CREATE OR REPLACE VIEW staff_schedule
+SECURITY DEFINER
+AS
 SELECT
     s.staff_id,
     s.staff_name || ' ' || s.staff_last_name AS staff_name,
@@ -393,3 +394,19 @@ GROUP BY
     s.staff_last_name
 ORDER BY
     s.staff_id;
+
+-- creating ROLEs for different staff types
+CREATE ROLE manager LOGIN PASSWORD 'managerpass1!';
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO manager;
+GRANT USAGE, SELECT, UPDATE, INSERT, DELETE ON ALL SEQUENCES IN SCHEMA public TO manager;
+
+CREATE ROLE mechanic LOGIN PASSWORD 'mechanicpass1!';
+GRANT USAGE ON SCHEMA public TO mechanic;
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM mechanic;
+GRANT SELECT ON staff_schedule TO mechanic;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+GRANT SELECT ON VIEWS TO mechanic;
+
+CREATE ROLE receptionist LOGIN PASSWORD 'receptionistpass1!';
+GRANT SELECT, INSERT, UPDATE ON booking, customer_details, vehicle_details TO receptionist;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO receptionist;
