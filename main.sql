@@ -70,7 +70,9 @@ CREATE TABLE courtesy_car(
 CREATE TABLE branch_detail(
     branch_id SERIAL PRIMARY KEY,
     branch_name VARCHAR(100) NOT NULL,
-    capacity SMALLINT NOT NULL
+    branch_address_line_1 VARCHAR(100),
+    branch_address_line_2 VARCHAR(100),
+    branch_postcode VARCHAR(10)
 );
 
 CREATE TABLE role_detail(
