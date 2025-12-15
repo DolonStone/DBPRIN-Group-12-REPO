@@ -298,6 +298,30 @@ ORDER BY
     mot_stats.pass_rate_percentage DESC;
 
 
+--- COMPARES EFFICIENCY ACROSS DIFFERENT ALLOCATION ROLES ---
+SELECT 
+    sa.allocation_role,
+    COUNT(DISTINCT sa.staff_id) AS staff_in_role,
+    COUNT(DISTINCT sa.service_task_id) AS total_tasks,
+    AVG(st.end_time - st.start_time) AS avg_task_duration,
+    COUNT(DISTINCT CASE 
+        WHEN st.service_task_status = 'Completed' THEN sa.service_task_id 
+    END) AS completed_tasks,
+    ROUND(
+        COUNT(DISTINCT CASE WHEN st.service_task_status = 'Completed' THEN sa.service_task_id END)::NUMERIC / 
+        NULLIF(COUNT(DISTINCT sa.service_task_id), 0) * 100, 2
+    ) AS completion_rate,
+    SUM(sd.service_cost) AS total_revenue_by_role
+FROM 
+    staff_allocation sa
+    INNER JOIN service_task st ON sa.service_task_id = st.service_task_id
+    INNER JOIN service_detail sd ON st.service_id = sd.service_id
+GROUP BY 
+    sa.allocation_role
+ORDER BY 
+    total_revenue_by_role DESC;
+
+
 -- VIEW: STAFF SCHEDULE (NEXT WEEK) ---
 CREATE OR REPLACE VIEW staff_schedule
 SECURITY DEFINER
