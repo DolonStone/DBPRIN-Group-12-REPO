@@ -655,6 +655,33 @@ FROM
     ) income ON income.branch_id = bd.branch_id -- INCOME FROM BOOKINGS
 ORDER BY
     bd.branch_id;
+--- INDENTIFIES REFUND PATTERNS ---
+SELECT
+   r.refund_id AS "Refund ID",
+   b.booking_id AS "Booking ID",
+   r.refund_amount AS "Refund Amount",
+   r.refund_date AS "Refund Date",
+   r.reason AS "Refund Reason",
+   sd.service_name AS "Service Name",
+   s.staff_name || ' ' || s.staff_last_name AS "Staff Involved",
+   p.payment_method AS "Payment Method",
+   ROUND((r.refund_amount::NUMERIC / NULLIF(p.payment_amount, 0)) * 100, 2) AS "Refund Percentage",
+   CASE
+       WHEN r.refund_amount = p.payment_amount THEN 'Full Refund'
+       WHEN r.refund_amount > p.payment_amount * 0.5 THEN 'Major Refund'
+       ELSE 'Partial Refund'
+   END AS "Refund Severity"
+FROM
+   refunds r
+   INNER JOIN payment p ON r.payment_id = p.payment_id
+   INNER JOIN booking b ON p.booking_id = b.booking_id
+   LEFT JOIN service_task st ON b.booking_id = st.booking_id
+   LEFT JOIN service_detail sd ON st.service_id = sd.service_id
+   LEFT JOIN staff_allocation sa ON st.service_task_id = sa.service_task_id
+   LEFT JOIN staff s ON sa.staff_id = s.staff_id
+ORDER BY
+   r.refund_date DESC,
+   r.refund_amount DESC;
 
 -- VIEW: STAFF SCHEDULE (NEXT WEEK) ---
 CREATE OR REPLACE VIEW staff_schedule AS
