@@ -301,7 +301,7 @@ WHERE
 ORDER BY
     mot_stats.pass_rate_percentage DESC;
 
---- INDENTIFIES REFUND PATTERNS, REASONS, AND SEVERITY ---
+--- INDENTIFIES REFUND PATTERNS ---
 
 SELECT 
     r.refund_id AS "Refund ID",
