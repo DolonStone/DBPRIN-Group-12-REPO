@@ -559,6 +559,47 @@ COMMIT;
 
 
 ---------------------------------------------------------------
+-- Staff qulification gap analysis --
+
+WITH ServiceRequirements AS (
+    SELECT 1 AS service_id, 1 AS req_cert_id, 'ASE Certified' AS cert_name
+    UNION ALL SELECT 2, 2, 'Brake Specialist'
+    UNION ALL SELECT 4, 3, 'Engine Specialist'
+),
+StaffCapabilities AS (
+   
+    SELECT 
+        sa.staff_id,
+        s.branch_id,
+        sd.shift_start_time,
+        sd.shift_end_time,
+        sc.certificate_id
+    FROM staff_availability sa
+    JOIN staff s ON sa.staff_id = s.staff_id
+    JOIN shift_detail sd ON sa.shift_id = sd.shift_id
+    JOIN staff_certification sc ON s.staff_id = sc.staff_id
+)
+SELECT 
+    b.booking_id,
+    b.scheduled_date + b.scheduled_time AS appointment_time,
+    sd.service_name,
+    sr.cert_name AS missing_certification,
+    br.branch_id
+FROM booking b
+JOIN service_task st ON b.booking_id = st.booking_id
+JOIN service_detail sd ON st.service_id = sd.service_id
+JOIN ServiceRequirements sr ON sd.service_id = sr.service_id
+JOIN branch_detail br ON b.branch_id = br.branch_id
+WHERE NOT EXISTS (
+
+    SELECT 1 
+    FROM StaffCapabilities sc
+    WHERE sc.branch_id = b.branch_id
+      AND sc.certificate_id = sr.req_cert_id
+      AND (b.scheduled_date + b.scheduled_time) BETWEEN sc.shift_start_time AND sc.shift_end_time
+)
+ORDER BY b.scheduled_date ASC;
+
 -- QUERY: MOT PASS RATE > 90% ---
 SELECT
     s.staff_id AS "Staff ID",
