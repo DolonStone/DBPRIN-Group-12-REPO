@@ -37,15 +37,10 @@ CREATE TABLE service_detail(
     service_id SERIAL PRIMARY KEY,
     service_name VARCHAR(100) NOT NULL,
     service_description TEXT,
-    service_duration SMALLINT NOT NULL,
+    service_duration SMALLINT NOT NULL
 );
 
-CREATE TABLE bay(
-    bay_id SERIAL PRIMARY KEY,
-    bay_last_inspection_date TIMESTAMP,
-    bay_status bay_status DEFAULT 'Available',
-    bay_inspection_result bay_inspection_result
-);
+
 
 CREATE TABLE memberships(
     membership_id SERIAL PRIMARY KEY,
@@ -107,7 +102,15 @@ CREATE TABLE vehicle_details(
 );
 
 --- STAFF TABLES ---
-CREATE TABLE staff(
+CREATE TABLE branch_detail (
+    branch_id SERIAL PRIMARY KEY,
+    branch_manager_id SMALLINT,
+    branch_address_line_1 VARCHAR(100),
+    branch_address_line_2 VARCHAR(100),
+    branch_postcode VARCHAR(10)
+);
+
+CREATE TABLE staff (
     staff_id SERIAL PRIMARY KEY,
     staff_name VARCHAR(100) NOT NULL,
     staff_last_name VARCHAR(50),
@@ -116,16 +119,9 @@ CREATE TABLE staff(
     branch_id SMALLINT NOT NULL,
     staff_addr_line_1 VARCHAR(100),
     staff_addr_line_2 VARCHAR(100),
-    staff_postcode VARCHAR(10),
+    staff_postcode VARCHAR(10)
 );
 
-CREATE TABLE branch_detail(
-    branch_id SERIAL PRIMARY KEY,
-    branch_manager_id SMALLINT,
-    branch_address_line_1 VARCHAR(100),
-    branch_address_line_2 VARCHAR(100),
-    branch_postcode VARCHAR(10),
-);
 
 ALTER TABLE
     staff
@@ -171,16 +167,25 @@ CREATE TABLE booking(
     booking_id SERIAL PRIMARY KEY,
     booking_date TIMESTAMP NOT NULL,
     scheduled_date TIMESTAMP NOT NULL,
-    scheduled_time SMALLINT NOT NULL,
+    scheduled_time TIME NOT NULL,
     booking_status booking_status DEFAULT 'Pending',
     customer_id SMALLINT NOT NULL,
     vehicle_id SMALLINT NOT NULL,
-    total_amount SMALLINT,
+    total_amount NUMERIC(10, 2),
     courtesy_car_id SMALLINT,
     branch_id SMALLINT NOT NULL,
     FOREIGN KEY (customer_id) REFERENCES customer_details(customer_details_id),
     FOREIGN KEY (vehicle_id) REFERENCES vehicle_details(vehicle_id),
     FOREIGN KEY (courtesy_car_id) REFERENCES courtesy_car(courtesy_car_id),
+    FOREIGN KEY (branch_id) REFERENCES branch_detail(branch_id)
+);
+
+CREATE TABLE bay(
+    bay_id SERIAL PRIMARY KEY,
+    bay_last_inspection_date TIMESTAMP,
+    bay_status bay_status DEFAULT 'Available',
+    bay_inspection_result bay_inspection_result,
+    branch_id SMALLINT NOT NULL,
     FOREIGN KEY (branch_id) REFERENCES branch_detail(branch_id)
 );
 
@@ -220,7 +225,7 @@ CREATE TABLE payment(
     payment_id SERIAL PRIMARY KEY,
     booking_id SMALLINT NOT NULL,
     payment_date TIMESTAMP,
-    payment_amount SMALLINT,
+    payment_amount NUMERIC(10, 2) NOT NULL,
     payment_method payment_method,
     payment_status payment_status DEFAULT 'Pending',
     FOREIGN KEY (booking_id) REFERENCES booking(booking_id)
@@ -229,7 +234,7 @@ CREATE TABLE payment(
 CREATE TABLE refunds(
     refund_id SERIAL PRIMARY KEY,
     payment_id SMALLINT NOT NULL,
-    refund_amount SMALLINT NOT NULL,
+    refund_amount NUMERIC(10,2) NOT NULL,
     refund_date TIMESTAMP NOT NULL,
     reason TEXT,
     FOREIGN KEY (payment_id) REFERENCES payment(payment_id)
@@ -298,10 +303,10 @@ ORDER BY
 
 --- COMPARES EFFICIENCY ACROSS DIFFERENT ALLOCATION ROLES ---
 SELECT
-    sa.allocation_role AS role_name,
-    COUNT(DISTINCT sa.staff_id) AS staff_in_role,
-    COUNT(DISTINCT sa.service_task_id) AS total_tasks,
-    AVG(st.end_time - st.start_time) AS avg_task_duration_minutes,
+    sa.allocation_role AS "Role Name",
+    COUNT(DISTINCT sa.staff_id) AS "Number of staff In Role",
+    COUNT(DISTINCT sa.service_task_id) AS "Total Tasks Done By Role",
+    AVG(st.end_time - st.start_time) AS "Avg Task Duration (mins)",
     COUNT(
         DISTINCT CASE
             WHEN st.service_task_status = 'Completed' THEN sa.service_task_id
@@ -386,6 +391,7 @@ FROM
     ) income ON income.branch_id = bd.branch_id -- INCOME FROM BOOKINGS
 ORDER BY
     bd.branch_id;
+
 
 -- VIEW: STAFF SCHEDULE (NEXT WEEK) ---
 CREATE
