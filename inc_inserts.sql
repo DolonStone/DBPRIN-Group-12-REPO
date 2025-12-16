@@ -35,7 +35,7 @@ CREATE TABLE supplier(
 
 CREATE TABLE service_detail(
     service_id SERIAL PRIMARY KEY,
-    service_name VARCHAR(100) NOT NULL,
+    service_name VARCHAR(100) NOT NULL,\
     service_description TEXT,
     service_duration SMALLINT NOT NULL
 );
@@ -394,6 +394,45 @@ insert into vehicle_details (vehicle_id, vehicle_vin, vehicle_reg) values (1, '1
     (9, '2G1FB1E34E9123456', 'OP78QRS'),
     (10, '1GNEK13ZX3R123456', 'TU90VWX');
 
+-- OPTIMIZATION - INDEX CREATION ---
+
+-- TRANSACTION 1: Booking Creation & Assignment ---
+
+CREATE INDEX idx_booking_scheduled_date ON booking(scheduled_date);
+CREATE INDEX idx_booking_status ON booking(booking_status);
+CREATE INDEX idx_booking_customer ON booking(customer_id);
+CREATE INDEX idx_service_task_booking ON service_task(booking_id);
+CREATE INDEX idx_bay_status ON bay(bay_status);
+CREATE INDEX idx_service_task_composite ON service_task(booking_id, service_task_status);
+
+
+-- TRANSACTION 2: Payment Processing & Revenue ---
+
+CREATE INDEX idx_payment_booking ON payment(booking_id);
+CREATE INDEX idx_payment_date ON payment(payment_date);
+CREATE INDEX idx_payment_status ON payment(payment_status);
+CREATE INDEX idx_refunds_payment ON refunds(payment_id);
+
+
+-- TRANSACTION 3: Staff Performance & Allocation ---
+
+CREATE INDEX idx_staff_allocation_staff ON staff_allocation(staff_id);
+CREATE INDEX idx_staff_allocation_task ON staff_allocation(service_task_id);
+CREATE INDEX idx_service_task_status ON service_task(service_task_status);
+CREATE INDEX idx_staff_branch ON staff(branch_id);
+CREATE INDEX idx_staff_manager ON staff(manager_id);
+
+
+-- ADDITIONAL PERFORMANCE INDEXES ---
+
+CREATE INDEX idx_mot_expiry ON car_mot(mot_expiry) 
+WHERE mot_result = 'Pass';
+CREATE INDEX idx_vehicle_reg ON vehicle_details(vehicle_reg);
+CREATE INDEX idx_service_task_bay ON service_task(bay_id);
+CREATE INDEX idx_parts_supplier ON parts_inventory(part_supplier_id);
+CREATE INDEX idx_staff_cert ON staff_certification(staff_id, certificate_id);
+CREATE INDEX idx_staff_role ON staff_role(staff_id, role_id);
+CREATE INDEX idx_staff_availability ON staff_availability(staff_id, shift_id);
 ---------------------------------------------------------------
 -- QUERY: MOT PASS RATE > 90% ---
 SELECT
@@ -674,43 +713,5 @@ SELECT
     ON ALL SEQUENCES IN SCHEMA public TO receptionist;
 
 
--- OPTIMIZATION - INDEX CREATION ---
 
--- TRANSACTION 1: Booking Creation & Assignment ---
-
-CREATE INDEX idx_booking_scheduled_date ON booking(scheduled_date);
-CREATE INDEX idx_booking_status ON booking(booking_status);
-CREATE INDEX idx_booking_customer ON booking(customer_id);
-CREATE INDEX idx_service_task_booking ON service_task(booking_id);
-CREATE INDEX idx_bay_status ON bay(bay_status);
-CREATE INDEX idx_service_task_composite ON service_task(booking_id, service_task_status);
-
-
--- TRANSACTION 2: Payment Processing & Revenue ---
-
-CREATE INDEX idx_payment_booking ON payment(booking_id);
-CREATE INDEX idx_payment_date ON payment(payment_date);
-CREATE INDEX idx_payment_status ON payment(payment_status);
-CREATE INDEX idx_refunds_payment ON refunds(payment_id);
-
-
--- TRANSACTION 3: Staff Performance & Allocation ---
-
-CREATE INDEX idx_staff_allocation_staff ON staff_allocation(staff_id);
-CREATE INDEX idx_staff_allocation_task ON staff_allocation(service_task_id);
-CREATE INDEX idx_service_task_status ON service_task(service_task_status);
-CREATE INDEX idx_staff_branch ON staff(branch_id);
-CREATE INDEX idx_staff_manager ON staff(manager_id);
-
-
--- ADDITIONAL PERFORMANCE INDEXES ---
-
-CREATE INDEX idx_mot_expiry ON car_mot(mot_expiry) 
-WHERE mot_result = 'Pass';
-CREATE INDEX idx_vehicle_reg ON vehicle_details(vehicle_reg);
-CREATE INDEX idx_service_task_bay ON service_task(bay_id);
-CREATE INDEX idx_parts_supplier ON parts_inventory(part_supplier_id);
-CREATE INDEX idx_staff_cert ON staff_certification(staff_id, certificate_id);
-CREATE INDEX idx_staff_role ON staff_role(staff_id, role_id);
-CREATE INDEX idx_staff_availability ON staff_availability(staff_id, shift_id);
 
