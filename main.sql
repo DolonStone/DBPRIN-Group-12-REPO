@@ -178,9 +178,11 @@ CREATE TABLE booking(
     vehicle_id SMALLINT NOT NULL,
     total_amount SMALLINT ,
     courtesy_car_id SMALLINT,
+    branch_id SMALLINT NOT NULL,
     FOREIGN KEY (customer_id) REFERENCES customer_details(customer_details_id),
     FOREIGN KEY (vehicle_id) REFERENCES vehicle_details(vehicle_id),
-    FOREIGN KEY (courtesy_car_id) REFERENCES courtesy_car(courtesy_car_id)
+    FOREIGN KEY (courtesy_car_id) REFERENCES courtesy_car(courtesy_car_id),
+    FOREIGN KEY (branch_id) REFERENCES branch_detail(branch_id)
 );
 
 CREATE TABLE service_task(
@@ -330,6 +332,15 @@ ORDER BY
     total_revenue_by_role DESC;
 
 
+-- Total income per branch ---
+SELECT
+    bd.branch_id AS "Branch ID",
+    bd.branch_name AS "Branch Name",
+    COALESCE(SUM(p.payment_amount), 0) AS "Total Income"
+FROM
+
+
+
 -- VIEW: STAFF SCHEDULE (NEXT WEEK) ---
 CREATE OR REPLACE VIEW staff_schedule
 SECURITY DEFINER
@@ -337,83 +348,13 @@ AS
 SELECT
     s.staff_id,
     s.staff_name || ' ' || s.staff_last_name AS staff_name,
-    STRING_AGG(
-        sh.shift_start_time || ' - ' || sh.shift_end_time,
-        ', '
-    ) FILTER (
-        WHERE
-            EXTRACT(
-                DOW
-                FROM
-                    sh.shift_date
-            ) = 1
-    ) AS "Monday",
-    STRING_AGG(
-        sh.shift_start_time || ' - ' || sh.shift_end_time,
-        ', '
-    ) FILTER (
-        WHERE
-            EXTRACT(
-                DOW
-                FROM
-                    sh.shift_date
-            ) = 2
-    ) AS "Tuesday",
-    STRING_AGG(
-        sh.shift_start_time || ' - ' || sh.shift_end_time,
-        ', '
-    ) FILTER (
-        WHERE
-            EXTRACT(
-                DOW
-                FROM
-                    sh.shift_date
-            ) = 3
-    ) AS "Wednesday",
-    STRING_AGG(
-        sh.shift_start_time || ' - ' || sh.shift_end_time,
-        ', '
-    ) FILTER (
-        WHERE
-            EXTRACT(
-                DOW
-                FROM
-                    sh.shift_date
-            ) = 4
-    ) AS "Thursday",
-    STRING_AGG(
-        sh.shift_start_time || ' - ' || sh.shift_end_time,
-        ', '
-    ) FILTER (
-        WHERE
-            EXTRACT(
-                DOW
-                FROM
-                    sh.shift_date
-            ) = 5
-    ) AS "Friday",
-    STRING_AGG(
-        sh.shift_start_time || ' - ' || sh.shift_end_time,
-        ', '
-    ) FILTER (
-        WHERE
-            EXTRACT(
-                DOW
-                FROM
-                    sh.shift_date
-            ) = 6
-    ) AS "Saturday",
-    STRING_AGG(
-        sh.shift_start_time || ' - ' || sh.shift_end_time,
-        ', '
-    ) FILTER (
-        WHERE
-            EXTRACT(
-                DOW
-                FROM
-                    sh.shift_date
-            ) = 0
-    ) AS "Sunday"
+    STRING_AGG(sh.shift_start_time || ' - ' || sh.shift_end_time,', ') FILTER (WHERE EXTRACT(DOW FROM sh.shift_date) = 1) AS "Monday",
+    STRING_AGG(sh.shift_start_time || ' - ' || sh.shift_end_time,', ') FILTER (WHERE EXTRACT(DOW FROM sh.shift_date) = 2) AS "Tuesday",
+    STRING_AGG(sh.shift_start_time || ' - ' || sh.shift_end_time,', ') FILTER (WHERE EXTRACT(DOW FROM sh.shift_date) = 3) AS "Wednesday",
+    STRING_AGG(sh.shift_start_time || ' - ' || sh.shift_end_time,', ') FILTER (WHERE EXTRACT(DOW FROM sh.shift_date) = 4) AS "Thursday",
+    STRING_AGG(sh.shift_start_time || ' - ' || sh.shift_end_time,', ') FILTER (WHERE EXTRACT(DOW FROM sh.shift_date) = 5) AS "Friday",
+    STRING_AGG(sh.shift_start_time || ' - ' || sh.shift_end_time,', ') FILTER (WHERE EXTRACT(DOW FROM sh.shift_date) = 6) AS "Saturday",
+    STRING_AGG(sh.shift_start_time || ' - ' || sh.shift_end_time,', ') FILTER (WHERE EXTRACT(DOW FROM sh.shift_date) = 0) AS "Sunday"
 FROM
     staff s
     LEFT JOIN staff_availability sa ON s.staff_id = sa.staff_id
@@ -428,6 +369,8 @@ GROUP BY
     s.staff_last_name
 ORDER BY
     s.staff_id;
+
+
 
 -- CREATING ROLES FOR DIFFERENT STAFF TYPES ---
 CREATE ROLE manager LOGIN PASSWORD 'managerpass1!';
