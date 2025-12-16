@@ -301,42 +301,36 @@ WHERE
 ORDER BY
     mot_stats.pass_rate_percentage DESC;
 
---- COMPARES EFFICIENCY ACROSS DIFFERENT ALLOCATION ROLES ---
-SELECT
-    sa.allocation_role AS "Role Name",
-    COUNT(DISTINCT sa.staff_id) AS "Number of staff In Role",
-    COUNT(DISTINCT sa.service_task_id) AS "Total Tasks Done By Role",
-    AVG(st.end_time - st.start_time) AS "Avg Task Duration (mins)",
-    COUNT(
-        DISTINCT CASE
-            WHEN st.service_task_status = 'Completed' THEN sa.service_task_id
-        END
-    ) AS completed_tasks,
-    ROUND(
-        COUNT(
-            DISTINCT CASE
-                WHEN st.service_task_status = 'Completed' THEN sa.service_task_id
-            END
-        ) :: NUMERIC / NULLIF(COUNT(DISTINCT sa.service_task_id), 0) * 100,
-        2
-    ) AS completion_rate_percentage,
-    COALESCE(SUM(sd.service_cost), 0) AS total_revenue_by_role,
-    ROUND(
-        COALESCE(SUM(sd.service_cost), 0) / NULLIF(COUNT(DISTINCT sa.staff_id), 0),
-        2
-    ) AS avg_revenue_per_staff,
-    ROUND(
-        COUNT(DISTINCT sa.service_task_id) :: NUMERIC / NULLIF(COUNT(DISTINCT sa.staff_id), 0),
-        2
-    ) AS avg_tasks_per_staff
-FROM
-    staff_allocation sa
-    INNER JOIN service_task st ON sa.service_task_id = st.service_task_id
-    INNER JOIN service_detail sd ON st.service_id = sd.service_id
-GROUP BY
-    sa.allocation_role
-ORDER BY
-    total_revenue_by_role DESC;
+--- INDENTIFIES REFUND PATTERNS, REASONS, AND SEVERITY ---
+
+SELECT 
+    r.refund_id AS "Refund ID",
+    b.booking_id AS "Booking ID",
+    c.customer_name AS "Customer Name",
+    r.refund_amount AS "Refund Amount",
+    r.refund_date AS "Refund Date",
+    r.reason AS "Refund Reason",
+    sd.service_name AS "Service Name",
+    s.staff_name || ' ' || s.staff_last_name AS "Staff Involved",
+    p.payment_method AS "Payment Method",
+    ROUND((r.refund_amount::NUMERIC / NULLIF(p.payment_amount, 0)) * 100, 2) AS "Refund Percentage",
+    CASE 
+        WHEN r.refund_amount = p.payment_amount THEN 'Full Refund'
+        WHEN r.refund_amount > p.payment_amount * 0.5 THEN 'Major Refund'
+        ELSE 'Partial Refund'
+    END AS "Refund Severity"
+FROM 
+    refunds r
+    INNER JOIN payment p ON r.payment_id = p.payment_id
+    INNER JOIN booking b ON p.booking_id = b.booking_id
+    INNER JOIN customer_details c ON b.customer_id = c.customer_details_id
+    LEFT JOIN service_task st ON b.booking_id = st.booking_id
+    LEFT JOIN service_detail sd ON st.service_id = sd.service_id
+    LEFT JOIN staff_allocation sa ON st.service_task_id = sa.service_task_id
+    LEFT JOIN staff s ON sa.staff_id = s.staff_id
+ORDER BY 
+    r.refund_date DESC, 
+    r.refund_amount DESC;
 
 -- All branch information -- 
 SELECT
